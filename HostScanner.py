@@ -1,38 +1,25 @@
-import socket
-import struct
-import time
+from scapy.all import ICMP, IP, sr1
 
 class HostScanner:
     def __init__(self, network):
         self.network = network
 
-    def checksum(self, data):
-        s = 0
-        for i in range(0, len(data), 2):
-            w = (data[i] << 8) + (data[i + 1] if (i + 1) < len(data) else 0)
-            s = s + w
-        s = (s >> 16) + (s & 0xFFFF)
-        s = s + (s >> 16)
-        return ~s & 0xFFFF
-
-    def icmp_request(self, dest_addr, timeout=1):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-        sock.settimeout(timeout)
-        
-        packet_id = int((time.time() * 1000) % 65535)
-        packet = struct.pack("bbHHh", 8, 0, 0, packet_id, 1)
-        packet = struct.pack("bbHHh", 8, 0, self.checksum(packet), packet_id, 1)
-
-        try:
-            sock.sendto(packet, (dest_addr, 1))
-            start_time = time.time()
-            sock.recv(1024)
-            return time.time() - start_time
-        except socket.timeout:
-            return None
-
     def scan_network(self):
-        # Aqui você deve iterar sobre os IPs da rede e chamar icmp_request para cada um
-        pass
+        print(f"Iniciando varredura ICMP na rede: {self.network}")
+        active_hosts = []
 
-#descobrir hosts ativos na rede. enviando pacotes ICMP para identificar dispositivos conectados
+        # Envia uma mensagem ICMP para cada host da rede
+        for ip in self._generate_ip_range(self.network):
+            pkt = IP(dst=ip) / ICMP()
+            response = sr1(pkt, timeout=1, verbose=0)
+            if response:
+                active_hosts.append({'ip': ip, 'status': 'active'})
+                print(f"Host ativo encontrado - IP: {ip}")
+
+        return active_hosts
+
+    def _generate_ip_range(self, network):
+        # Função para gerar o range de IPs da rede especificada
+        ip_parts = network.split('.')
+        base_ip = f"{ip_parts[0]}.{ip_parts[1]}.{ip_parts[2]}"
+        return [f"{base_ip}.{i}" for i in range(1, 255)]  # IPs de 1 a 254
