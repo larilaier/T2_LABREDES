@@ -1,22 +1,47 @@
-# main.py
-from host_scanner import HostScanner
-from arp_spoofer import ARPSpoofer
-from traffic_monitor import TrafficMonitor
+import scapy.all as scapy
+import socket
 
-# 1. Escaneando a rede
-scanner = HostScanner("192.168.1.0/24")
-active_hosts = scanner.scan_network()
-print("Hosts ativos:", active_hosts)
+# Função para fazer varredura ARP
+def scan(ip):
+    # Solicita um pacote ARP
+    arp_request = scapy.ARP(pdst=ip)
+    broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+    # Combina a solicitação ARP com o pacote de broadcast
+    arp_request_broadcast = broadcast/arp_request
+    # Envia o pacote e recebe as respostas
+    answered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)[0]
+    
+    active_hosts = []
+    for element in answered_list:
+        # Cria um dicionário com IP e MAC de hosts ativos
+        active_hosts.append({"ip": element[1].psrc, "mac": element[1].hwsrc})
+    
+    return active_hosts
 
-# 2. Iniciando o ataque ARP Spoofing em um host ativo
-target_ip = active_hosts[0][0]  # Exemplo: usa o IP do primeiro host ativo
-spoofer = ARPSpoofer(target_ip, "192.168.1.1")
-spoofer.enable_ip_forwarding()
-spoofer.start_spoofing()
+# Função para capturar pacotes
+def capture_packets():
+    # Captura pacotes e exibe o IP de origem e destino
+    print("Iniciando captura de pacotes...")
+    scapy.sniff(prn=process_packet, store=False, count=10)
 
-# 3. Monitorando o tráfego do alvo
-monitor = TrafficMonitor()
-monitor.start_sniffer()
+# Função para processar pacotes
+def process_packet(packet):
+    if packet.haslayer(scapy.IP):
+        ip_src = packet[scapy.IP].src
+        ip_dst = packet[scapy.IP].dst
+        print(f"Pacote de IP: {ip_src} para {ip_dst}")
 
-# Após terminar, pare o spoofing
-spoofer.stop_spoofing()
+# Função principal
+def main():
+    ip_range = "10.1.64.0/24"
+    print(f"Iniciando varredura de ARP na rede: {ip_range}")
+    
+    # Realiza a varredura ARP
+    active_hosts = scan(ip_range)
+    print("Hosts ativos:", active_hosts)
+    
+    # Inicia captura de pacotes
+    capture_packets()
+
+if __name__ == "__main__":
+    main()
