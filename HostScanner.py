@@ -1,25 +1,18 @@
-from scapy.all import ICMP, IP, sr1
+import scapy.all as scapy
 
-class HostScanner:
-    def __init__(self, network):
-        self.network = network
+# Função para fazer varredura ARP
+def scan(ip_range):
+    # Solicita um pacote ARP
+    arp_request = scapy.ARP(pdst=ip_range)
+    broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
+    arp_request_broadcast = broadcast/arp_request
 
-    def scan_network(self):
-        print(f"Iniciando varredura ICMP na rede: {self.network}")
-        active_hosts = []
-
-        # Envia uma mensagem ICMP para cada host da rede
-        for ip in self._generate_ip_range(self.network):
-            pkt = IP(dst=ip) / ICMP()
-            response = sr1(pkt, timeout=1, verbose=0)
-            if response:
-                active_hosts.append({'ip': ip, 'status': 'active'})
-                print(f"Host ativo encontrado - IP: {ip}")
-
-        return active_hosts
-
-    def _generate_ip_range(self, network):
-        # Função para gerar o range de IPs da rede especificada
-        ip_parts = network.split('.')
-        base_ip = f"{ip_parts[0]}.{ip_parts[1]}.{ip_parts[2]}"
-        return [f"{base_ip}.{i}" for i in range(1, 255)]  # IPs de 1 a 254
+    # Envia o pacote e recebe as respostas
+    answered_list = scapy.srp(arp_request_broadcast, timeout=2, verbose=False)[0]
+    
+    active_hosts = []
+    for element in answered_list:
+        active_hosts.append({"ip": element[1].psrc, "mac": element[1].hwsrc})
+        print(f"Host ativo encontrado - IP: {element[1].psrc}, MAC: {element[1].hwsrc}")
+    
+    return active_hosts
