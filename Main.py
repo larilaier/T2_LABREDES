@@ -1,5 +1,14 @@
 import scapy.all as scapy
 import socket
+import argparse
+
+parser = argparse.ArgumentParser(description="T2 Lab Redes")
+parser.add_argument("ip", help="Endereco IP e Mascara. ex: 10.32.143.0/24")
+parser.add_argument("timeout", help="Tempo limite de execucao em milisegundos")
+args = parser.parse_args()
+
+print(args.ip)
+print(args.timeout)
 
 # Função para fazer varredura ARP
 def scan(ip):
@@ -20,9 +29,10 @@ def scan(ip):
 
 # Função para capturar pacotes
 def capture_packets():
+    timeout = float(args.timeout)/1000
     # Captura pacotes e exibe o IP de origem e destino
     print("Iniciando captura de pacotes...")
-    scapy.sniff(prn=process_packet, store=False, count=10)
+    scapy.sniff(prn=process_packet, store=False, timeout=timeout)
 
 # Função para processar pacotes
 def process_packet(packet):
@@ -33,7 +43,7 @@ def process_packet(packet):
 
 # Função principal
 def main():
-    ip_range = "10.1.64.0/24"
+    ip_range = args.ip
     print(f"Iniciando varredura de ARP na rede: {ip_range}")
     
     # Realiza a varredura ARP
