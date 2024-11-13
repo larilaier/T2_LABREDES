@@ -1,18 +1,18 @@
-import scapy.all as scapy
+import argparse
+import nmap
 
-# Função para fazer varredura ARP
-def scan(ip_range):
-    # Solicita um pacote ARP
-    arp_request = scapy.ARP(pdst=ip_range)
-    broadcast = scapy.Ether(dst="ff:ff:ff:ff:ff:ff")
-    arp_request_broadcast = broadcast/arp_request
+parser = argparse.ArgumentParser(description="T2 Lab Redes")
+parser.add_argument("ip", help="Endereco IP e Mascara. ex: 10.32.143.0/24")
+parser.add_argument("timeout", help="Tempo limite de execucao em milisegundos")
+args = parser.parse_args()
+ip_range = args.ip
+timeout = args.timeout
+print(ip_range)
+print(f"{timeout}ms")
 
-    # Envia o pacote e recebe as respostas
-    answered_list = scapy.srp(arp_request_broadcast, timeout=2, verbose=False)[0]
-    
-    active_hosts = []
-    for element in answered_list:
-        active_hosts.append({"ip": element[1].psrc, "mac": element[1].hwsrc})
-        print(f"Host ativo encontrado - IP: {element[1].psrc}, MAC: {element[1].hwsrc}")
-    
-    return active_hosts
+scanner = nmap.PortScanner()
+scanner.scan(hosts=ip_range, arguments=f'-sn --host-timeout {timeout}ms')
+
+for host in scanner.all_hosts():
+    print(f"Host : {host} ({scanner[host].hostname()})")
+    print(f"State : {scanner[host].state()}")
