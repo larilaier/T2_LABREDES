@@ -1,13 +1,12 @@
 import argparse
-from concurrent.futures import ThreadPoolExecutor
 import ipaddress
+import subprocess
 import threading
 import time
-import nmap
 
 parser = argparse.ArgumentParser(description="T2 Lab Redes")
 parser.add_argument("ip", nargs="?", default="10.32.143.0/24", help="Endereco IP e Mascara. ex: 10.32.143.0/24")
-parser.add_argument("timeout", nargs="?", default="10", help="Tempo limite de execucao em milisegundos")
+parser.add_argument("timeout", nargs="?", default="500", help="Tempo limite de execucao em milisegundos")
 args = parser.parse_args()
 
 totl_init_time = 0
@@ -28,6 +27,10 @@ def formatar_tempo(segundos):
     segundos_restantes = int(segundos % 60)
     return f"{minutos}:{segundos_restantes:02}"
 
+def imprime_enderecos(active_hosts):
+    for host in active_hosts:
+        print(f"IPv4: {host[0]}, Response time: {formatar_tempo(host[1])} ms")
+
 def lista_enderecos(ip_range):
     rede = ipaddress.ip_network(ip_range, strict=False)
     hosts = [str(host) for host in rede.hosts()]
@@ -37,44 +40,58 @@ def scan_host(endereco_host, timeout):
     local_init = 0
     local_end = 0
     response_time = 0
-    
-    scanner = nmap.PortScanner()
+
+    if subprocess.os.name == 'nt':
+        command = ['ping', '-n', '1', '-w', str(timeout), endereco_host]
+    else:
+        command = ['ping', '-c', '1', '-W', str(int(timeout / 1000)), endereco_host]
 
     local_init= time.time()
-    scanner.scan(hosts=endereco_host, arguments=f'-sn --host-timeout {timeout}ms')
-    local_end = time.time()
 
-    response_time = (local_end - local_init) * 1000
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=timeout/1000)
+        
+        local_end = time.time()
+        response_time = (local_end - local_init) * 1000
 
-    if endereco_host in scanner.all_hosts():
-        print(f"Host : {endereco_host} ({scanner[endereco_host].hostname()}), response time: {response_time} ms")
+        if result.returncode == 0:
+            return [endereco_host, response_time]
+        else:
+            return None
+    except subprocess.TimeoutExpired:
+        return None
 
 def scan_all_hosts(ip_range, timeout):
     threads = []
+    active_hosts = []
     hosts = lista_enderecos(ip_range=ip_range)
 
+    def thread_scan(host):
+        result = scan_host(endereco_host=host, timeout=timeout)
+        if result:
+            active_hosts.append(result)
+
     for host in hosts:
-        thread = threading.Thread(target=scan_host, args=(host, timeout))
+        thread = threading.Thread(target=thread_scan, args=(host,))
         threads.append(thread)
         thread.start()
 
     for thread in threads:
         thread.join()
 
-def scan_all_hosts_thread_pool(ip_range, timeout):
-    hosts = lista_enderecos(ip_range=ip_range)
-    with ThreadPoolExecutor(max_workers=20) as executor:  # Limita a 10 threads paralelas
-        executor.map(lambda host: scan_host(host, timeout), hosts)
+    return active_hosts
 
 start_time()
 
 ip_range = args.ip
-timeout = args.timeout
+timeout = int(args.timeout)
 print(ip_range)
 print(f"{timeout}ms")
 
-# scan_all_hosts(ip_range=ip_range, timeout=timeout)
-scan_all_hosts_thread_pool(ip_range=ip_range,timeout=timeout)
+active_hosts = scan_all_hosts(ip_range=ip_range, timeout=timeout)
 
 stop_time()
+
+imprime_enderecos(active_hosts=active_hosts)
+
 print(f"total_runtime: {formatar_tempo(total_runtime)}s")
