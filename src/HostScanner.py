@@ -29,7 +29,7 @@ def formatar_tempo(segundos):
 
 def imprime_enderecos(active_hosts):
     for host in active_hosts:
-        print(f"IPv4: {host[0]}, Response time: {formatar_tempo(host[1])} ms")
+        print(f"IPv4: {host[0]}, Response time: {host[1]:.2f} ms")
 
 def lista_enderecos(ip_range):
     rede = ipaddress.ip_network(ip_range, strict=False)
@@ -86,7 +86,7 @@ start_time()
 ip_range = args.ip
 timeout = int(args.timeout)
 print(ip_range)
-print(f"{timeout}ms")
+print(f"{timeout}ms\n")
 
 active_hosts = scan_all_hosts(ip_range=ip_range, timeout=timeout)
 
@@ -94,4 +94,7 @@ stop_time()
 
 imprime_enderecos(active_hosts=active_hosts)
 
-print(f"total_runtime: {formatar_tempo(total_runtime)}s")
+total_hosts = len(lista_enderecos(ip_range))
+print(f"\nNúmero total de máquinas na rede: {total_hosts}")
+print(f"Número de máquinas ativas: {len(active_hosts)}")
+print(f"Tempo total de varredura: {formatar_tempo(total_runtime)}s\n")
