@@ -1,7 +1,6 @@
 import argparse
 import ipaddress
 from socket import socket, SOCK_RAW, AF_INET
-import subprocess
 import threading
 import time
 
