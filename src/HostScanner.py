@@ -1,8 +1,10 @@
 import argparse
 import ipaddress
+from socket import socket, SOCK_RAW, AF_INET
 import subprocess
 import threading
 import time
+
 
 parser = argparse.ArgumentParser(description="T2 Lab Redes")
 parser.add_argument("ip", nargs="?", default="10.32.143.0/24", help="Endereco IP e Mascara. ex: 10.32.143.0/24")
@@ -36,30 +38,42 @@ def lista_enderecos(ip_range):
     hosts = [str(host) for host in rede.hosts()]
     return hosts
 
-def scan_host(endereco_host, timeout):
-    local_init = 0
-    local_end = 0
-    response_time = 0
+# def scan_host(endereco_host, timeout):
+#     local_init = 0
+#     local_end = 0
+#     response_time = 0
 
-    if subprocess.os.name == 'nt':
-        command = ['ping', '-n', '1', '-w', str(timeout), endereco_host]
-    else:
-        command = ['ping', '-c', '1', '-W', str(int(timeout / 1000)), endereco_host]
+#     if subprocess.os.name == 'nt':
+#         command = ['ping', '-n', '1', '-w', str(timeout), endereco_host]
+#     else:
+#         command = ['ping', '-c', '1', '-W', str(int(timeout / 1000)), endereco_host]
 
-    local_init= time.time()
+#     local_init= time.time()
 
-    try:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=timeout/1000)
+#     try:
+#         result = subprocess.run(command, capture_output=True, text=True, timeout=timeout/1000)
         
-        local_end = time.time()
-        response_time = (local_end - local_init) * 1000
+#         local_end = time.time()
+#         response_time = (local_end - local_init) * 1000
 
-        if result.returncode == 0:
-            return [endereco_host, response_time]
-        else:
-            return None
-    except subprocess.TimeoutExpired:
-        return None
+#         if result.returncode == 0:
+#             return [endereco_host, response_time]
+#         else:
+#             return None
+#     except subprocess.TimeoutExpired:
+#         return None
+
+def scan_host(endereco_host, timeout):
+    raw_socket = socket(AF_INET, SOCK_RAW)
+    raw_socket.bind(("eth1", 0))
+    src_addr = "\x01\x02\x03\x04\x05\x06"
+    dst_addr = "\x01\x02\x03\x04\x05\x06"
+    payload = ("["*30)+"PAYLOAD"+("]"*30)
+    ethertype = "\x08\x01"
+    raw_socket.send(dst_addr+src_addr+ethertype+payload)
+
+
+
 
 def scan_all_hosts(ip_range, timeout):
     threads = []
