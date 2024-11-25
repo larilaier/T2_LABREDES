@@ -119,7 +119,7 @@ def imprime_enderecos(active_hosts: list, total_hosts: int) -> None:
 
 def is_valid_mac(mac: str) -> bool:
     """
-    Valida se o endereco MAC e plausível e nao e broadcast ou de roteadores.
+    Valida se o endereco MAC e plausivel e nao e broadcast ou de roteadores.
 
     Args:
         mac (str): Endereco MAC no formato "AA:BB:CC:DD:EE:FF".
@@ -169,16 +169,16 @@ def obtem_interface():
 
 def obtem_endr_orig(ip_dest: str) -> tuple:
     """
-    Obtem o endereco IP e MAC da própria maquina.
+    Obtem o endereco IP e MAC da propria maquina.
 
     Args:
-        ip_dest (str): Endereco IP de destino (nao usado para determinar o MAC local, mas necessario para lógica do socket).
+        ip_dest (str): Endereco IP de destino (nao usado para determinar o MAC local, mas necessario para logica do socket).
 
     Returns:
         tuple: IP de origem (str), MAC de origem (str).
 
     Raises:
-        ValueError: Se nao for possível determinar os enderecos.
+        ValueError: Se nao for possivel determinar os enderecos.
     """
     try:
         # Obter IP de origem
@@ -198,8 +198,8 @@ def calcula_checksum(data: bytes) -> int:
     Calcula o checksum de um pacote ICMP.
 
     O checksum e calculado somando todas as palavras de 16 bits (2 bytes consecutivos)
-    do pacote. Se o número total de bytes for ímpar, o último byte e tratado como
-    se estivesse acompanhado de um byte 0. Após a soma, o resultado e ajustado para
+    do pacote. Se o número total de bytes for impar, o último byte e tratado como
+    se estivesse acompanhado de um byte 0. Apos a soma, o resultado e ajustado para
     caber em 16 bits e complementado bit a bit.
 
     Args:
@@ -212,7 +212,7 @@ def calcula_checksum(data: bytes) -> int:
     n = len(data)
 
     for i in range(0, n, 2):
-        # Processa dois bytes por vez; adiciona 0 ao último byte se for ímpar
+        # Processa dois bytes por vez; adiciona 0 ao último byte se for impar
         if i + 1 < n:
             plvr_16bits = (data[i] << 8) + data[i + 1]
         else:
@@ -329,7 +329,7 @@ def cria_pacote_icmp(identificador: int, sequencia: int) -> bytes:
     """
     try:
         tipo = 8  # Echo request
-        codigo = 0  # Código padrao
+        codigo = 0  # Codigo padrao
         checksum = 0  # Inicialmente 0
 
         # Cabecalho inicial com checksum zero
@@ -534,7 +534,7 @@ def scan_host(endereco_ip_host: str, timeout: int, interface: str, mac_orig: str
             mac_dest = arp_request(endereco_ip_host, interface, ip_orig, mac_orig, timeout / 1000)
 
         if not mac_dest:
-            # print(f"[DEBUG] Nao foi possível resolver o MAC para {endereco_ip_host}.")
+            # print(f"[DEBUG] Nao foi possivel resolver o MAC para {endereco_ip_host}.")
             return None
 
         pacote = monta_pacote(mac_orig, mac_dest, ip_orig, endereco_ip_host)
@@ -621,7 +621,7 @@ def scan_all_hosts(ip_range: str, timeout: int, mac_orig: str, ip_orig: str, int
                 # print(f"[ERRO] Falha na execucao de thread: {e}")
                 pass
 
-    # print(f"[DEBUG] Varredura concluída. {len(active_hosts)} hosts ativos encontrados.")
+    # print(f"[DEBUG] Varredura concluida. {len(active_hosts)} hosts ativos encontrados.")
     return active_hosts
 
 def main():
@@ -629,7 +629,7 @@ def main():
     Funcao principal que coordena a execucao do programa de varredura de rede.
 
     Esta funcao:
-        1. Carrega o cache ARP salvo anteriormente, se disponível.
+        1. Carrega o cache ARP salvo anteriormente, se disponivel.
         2. Determina a interface de rede conectada ao gateway padrao.
         3. Obtem os enderecos IP e MAC da maquina de origem.
         4. Realiza a varredura de todos os hosts no intervalo fornecido.
@@ -684,4 +684,5 @@ def main():
     # Salvar o cache ARP ao termino da execucao
     save_arp_cache(arp_cache)
 
-main()
+if __name__ == "__main__":
+    main()
