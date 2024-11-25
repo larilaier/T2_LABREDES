@@ -1,0 +1,59 @@
+impettus@Impettus-HP-Z220-CMT-BR-Workstation:~/Documents/T2_LABREDES/src$ sudo python3 HostScanner.py
+[DEBUG] IP origem: 192.168.100.8, MAC origem: 6f:40:50:c6:cf:65
+[DEBUG] MAC encontrado no cache ARP para 192.168.100.45: e0:73:e7:b3:dd:82
+[DEBUG] Ethernet Header: e073e7b3dd826f4050c6cf650800
+[DEBUG] Cabeçalho Ethernet: e073e7b3dd826f4050c6cf650800
+[DEBUG] ICMP Header: 0800e65400010001
+[DEBUG] ICMP Payload: 4c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] ICMP Packet: 0800e654000100014c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] Cabeçalho ICMP: 0800e654000100014c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] IP Header: 45000037d431000040015d0ec0a86408c0a8642d
+[DEBUG] Cabeçalho IP: 45000037d431000040015d0ec0a86408c0a8642d
+[DEBUG] Pacote completo (Ethernet+IP+ICMP): e073e7b3dd826f4050c6cf65080045000037d431000040015d0ec0a86408c0a8642d0800e654000100014c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] Pacote enviado para eno1, timeout: 5.0s
+[DEBUG] Timeout alcançado sem resposta.
+[DEBUG] Nenhuma resposta de 192.168.100.45
+[INFO] Nenhuma resposta do host 192.168.100.45.
+impettus@Impettus-HP-Z220-CMT-BR-Workstation:~/Documents/T2_LABREDES/src$ sudo python3 HostScanner.py
+[DEBUG] IP origem: 192.168.100.8, MAC origem: 6f:40:50:c6:cf:65
+[DEBUG] MAC encontrado no cache ARP para 192.168.100.45: e0:73:e7:b3:dd:82
+[DEBUG] Ethernet Header: e073e7b3dd826f4050c6cf650800
+[DEBUG] Cabeçalho Ethernet: e073e7b3dd826f4050c6cf650800
+[DEBUG] ICMP Header: 0800e65400010001
+[DEBUG] ICMP Payload: 4c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] ICMP Packet: 0800e654000100014c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] Cabeçalho ICMP: 0800e654000100014c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] IP Header: 45000037d431000040015d0ec0a86408c0a8642d
+[DEBUG] Cabeçalho IP: 45000037d431000040015d0ec0a86408c0a8642d
+[DEBUG] Pacote completo (Ethernet+IP+ICMP): e073e7b3dd826f4050c6cf65080045000037d431000040015d0ec0a86408c0a8642d0800e654000100014c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] Pacote enviado para eno1, timeout: 5.0s
+[DEBUG] Timeout alcançado sem resposta.
+[DEBUG] Nenhuma resposta de 192.168.100.45
+[INFO] Nenhuma resposta do host 192.168.100.45.
+impettus@Impettus-HP-Z220-CMT-BR-Workstation:~/Documents/T2_LABREDES/src$ ping 192.168.100.45
+PING 192.168.100.45 (192.168.100.45) 56(84) bytes of data.
+64 bytes from 192.168.100.45: icmp_seq=1 ttl=64 time=0.621 ms
+64 bytes from 192.168.100.45: icmp_seq=2 ttl=64 time=0.570 ms
+64 bytes from 192.168.100.45: icmp_seq=3 ttl=64 time=0.589 ms
+64 bytes from 192.168.100.45: icmp_seq=4 ttl=64 time=0.555 ms
+^C
+--- 192.168.100.45 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3055ms
+rtt min/avg/max/mdev = 0.555/0.583/0.621/0.024 ms
+impettus@Impettus-HP-Z220-CMT-BR-Workstation:~/Documents/T2_LABREDES/src$ sudo python3 HostScanner.py
+[DEBUG] IP origem: 192.168.100.8, MAC origem: 6f:40:50:c6:cf:65
+[DEBUG] MAC encontrado no cache ARP para 192.168.100.45: e0:73:e7:b3:dd:82
+[DEBUG] Ethernet Header: e073e7b3dd826f4050c6cf650800
+[DEBUG] Cabeçalho Ethernet: e073e7b3dd826f4050c6cf650800
+[DEBUG] ICMP Header: 0800e65400010001
+[DEBUG] ICMP Payload: 4c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] ICMP Packet: 0800e654000100014c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] Cabeçalho ICMP: 0800e654000100014c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] IP Header: 45000037d431000040015d0ec0a86408c0a8642d
+[DEBUG] Cabeçalho IP: 45000037d431000040015d0ec0a86408c0a8642d
+[DEBUG] Pacote completo (Ethernet+IP+ICMP): e073e7b3dd826f4050c6cf65080045000037d431000040015d0ec0a86408c0a8642d0800e654000100014c6f6f6b696e6720666f722061637469766520686f7374732e2e2e
+[DEBUG] Pacote enviado para eno1, timeout: 5.0s
+[DEBUG] Resposta recebida em 75.62 ms
+[DEBUG] Host 192.168.100.45 respondeu em 75.62ms
+[SUCESSO] Host ativo: 192.168.100.45, Tempo de resposta: 75.62 ms
+impettus@Impettus-HP-Z220-CMT-BR-Workstation:~/Documents/T2_LABREDES/src$ 
