@@ -1,5 +1,7 @@
 import argparse
 import ipaddress
+import json
+import os
 import platform
 import re
 import socket
@@ -13,6 +15,8 @@ parser = argparse.ArgumentParser(description="T2 Lab Redes")
 parser.add_argument("ip", nargs="?", default="10.32.143.0/24", help="Endereco IP e Mascara. ex: 10.32.143.0/24")
 parser.add_argument("timeout", nargs="?", default="500", help="Tempo limite de execucao em milisegundos")
 args = parser.parse_args()
+
+arp_cache_file = "arp_cache.json"
 
 totl_init_time = 0
 total_end_time = 0
@@ -64,6 +68,28 @@ def formatar_tempo(segundos:float) -> str:
     minutos = int(segundos // 60)
     segundos_restantes = int(segundos % 60)
     return f"{minutos}:{segundos_restantes:02}"
+
+def load_arp_cache() -> dict:
+    """
+    Carrega o cache ARP de um arquivo local.
+
+    Returns:
+        dict: Cache ARP no formato {IP: MAC}.
+    """
+    if os.path.exists(arp_cache_file):
+        with open(arp_cache_file, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_arp_cache(cache: dict) -> None:
+    """
+    Salva o cache ARP em um arquivo local.
+
+    Args:
+        cache (dict): Cache ARP no formato {IP: MAC}.
+    """
+    with open(arp_cache_file, "w") as f:
+        json.dump(cache, f)
 
 def imprime_enderecos(active_hosts:list) -> None:
     """
@@ -153,17 +179,23 @@ def obtem_mac_windows(ip_orig: str) -> str:
     """
     try:
         # Captura a saída do comando ipconfig com tolerância à decodificação
-        output = subprocess.check_output("ipconfig /all", shell=True, text=True, encoding='latin-1', errors='ignore')
+        output = subprocess.check_output("ipconfig /all", shell=True, text=True, encoding="cp850", errors="ignore")
 
         # Divide a saída por adaptadores para buscar o adaptador correto
         adaptadores = output.split("\n\n")
         for adaptador in adaptadores:
             # Verifica se o adaptador contém o IP de origem
+            print(f"Adaptador analisado: {adaptador}")
             if ip_orig in adaptador:
+                print(f"IP {ip_orig} encontrado no adaptador!")
                 # Busca o endereço MAC associado ao adaptador
-                mac_match = re.search(r"Endere[oç] F[ií]sico.*?: ([\w-]+)", adaptador, re.IGNORECASE)
+                mac_match = re.search(r"Endere[oç]\s+F[ií]sico.*?:\s*([A-Fa-f0-9-]+)", adaptador, re.IGNORECASE)
                 if mac_match:
-                    return mac_match.group(1).replace("-", ":")
+                    mac = mac_match.group(1).replace("-", ":")
+                    print(f"MAC encontrado: {mac}")
+                    return mac
+                else:
+                    print("MAC não encontrado no adaptador.")
     except subprocess.CalledProcessError as e:
         raise ValueError(f"Erro ao executar 'ipconfig': {e}")
     except Exception as e:
@@ -372,6 +404,47 @@ def cria_pacote_icmp(identificador:int , sequencia:int) -> bytes:
 
     return header + payload
 
+def cria_cabecalho_arp(mac_orig: str, ip_orig: str, mac_dest: str = "00:00:00:00:00:00", ip_dest: str = "0.0.0.0", operacao: int = 1) -> bytes:
+    """
+    Cria o cabeçalho ARP.
+
+    Args:
+        mac_origem (str): Endereço MAC de origem.
+        ip_origem (str): Endereço IP de origem.
+        mac_destino (str): Endereço MAC de destino. Padrão: "00:00:00:00:00:00".
+        ip_destino (str): Endereço IP de destino. Padrão: "0.0.0.0".
+        operacao (int): Tipo de operação ARP (1 = Request, 2 = Reply). Padrão: 1 (Request).
+
+    Returns:
+        bytes: Cabeçalho ARP em bytes.
+    """
+    htype = struct.pack("!H", 1)            # Tipo de hardware: Ethernet (1)
+    ptype = struct.pack("!H", 0x0800)       # Tipo de protocolo: IPv4 (0x0800)
+    hlen = struct.pack("!B", 6)             # Comprimento do endereço de hardware: 6 bytes
+    plen = struct.pack("!B", 4)             # Comprimento do endereço de protocolo: 4 bytes
+    operacao = struct.pack("!H", operacao)  # Operação ARP (1 = Request, 2 = Reply)
+
+    # Converte endereços MAC e IP para bytes
+    mac_origem_bytes = bytes.fromhex(mac_orig.replace(":", ""))
+    ip_origem_bytes = socket.inet_aton(ip_orig)
+    mac_destino_bytes = bytes.fromhex(mac_dest.replace(":", ""))
+    ip_destino_bytes = socket.inet_aton(ip_destino)
+
+    # Monta o cabeçalho ARP
+    cabecalho = (
+        htype +
+        ptype +
+        hlen +
+        plen +
+        operacao +
+        mac_origem_bytes +
+        ip_origem_bytes +
+        mac_destino_bytes +
+        ip_destino_bytes
+    )
+
+    return cabecalho
+
 def monta_pacote(mac_orig: str, mac_dest: str, ip_orig: str, ip_dest: str) -> bytes:
     """
     Monta o pacote completo (Ethernet + IP + ICMP).
@@ -394,6 +467,39 @@ def monta_pacote(mac_orig: str, mac_dest: str, ip_orig: str, ip_dest: str) -> by
     pacote = ethernet_header + ip_header + icmp_header
 
     return pacote
+
+def arp_request(ip_dest: str, interface: str, ip_orig: str, mac_orig: str, timeout: float = 1.0) -> str:
+    """
+    Resolve o MAC de um endereço IP utilizando ARP.
+
+    Args:
+        ip_dest (str): Endereço IP de destino.
+        interface (str): Interface de rede.
+        ip_orig (str): Endereço IP de origem.
+        mac_orig (str): Endereço MAC de origem.
+        timeout (float): Tempo limite para aguardar a resposta ARP.
+
+    Returns:
+        str: Endereço MAC do IP de destino.
+
+    Raises:
+        ValueError: Se o MAC não for resolvido.
+    """
+    # Verifica o cache
+    cache = load_arp_cache()
+    if ip_dest in cache:
+        return cache[ip_dest]
+
+    # Cabecalho ethernet
+    mac_broadcast = "ff:ff:ff:ff:ff:ff"
+    ethertype_arp = 0x0806 # ARP protocol
+    ethernet_header = cria_cabecalho_ethernet(mac_dest=mac_broadcast, mac_orig=mac_orig, protocol=ethertype_arp)
+
+    # Cabecalho ARP
+    arp_payload = cria_cabecalho_arp(mac_orig=mac_orig, ip_orig=ip_orig, ip_dest=ip_dest, operacao=1)
+
+    # Pacote completo
+    pacote = ethernet_header + arp_payload
 
 def enviar_pacote(pacote: bytes, interface: str, timeout: float) -> tuple:
     """
@@ -438,21 +544,45 @@ def enviar_pacote(pacote: bytes, interface: str, timeout: float) -> tuple:
 
 def scan_host(endereco_ip_host: str, timeout: int, interface: str, mac_orig: str, ip_orig: str) -> tuple:
     """
-    Realiza um ping em um host especifico enviando um pacote Ethernet + IP + ICMP.
+    Realiza o escaneamento de um único host na rede, enviando pacotes ICMP encapsulados em Ethernet
+    e, quando necessário, resolvendo o endereço MAC de destino utilizando ARP.
+
+    O método:
+        1. Resolve o endereço MAC de destino utilizando ARP, se o MAC não for conhecido.
+        2. Monta um pacote Ethernet + IP + ICMP para envio.
+        3. Envia o pacote e aguarda uma resposta dentro do tempo limite.
+        4. Retorna o IP e o tempo de resposta (RTT) caso o host responda, ou None se não houver resposta.
 
     Args:
-        endereco_ip_host (str): Endereco IP do host a ser analisado.
-        timeout (int): Tempo limite para resposta, em milissegundos.
-        interface (str): Nome da interface de rede (ex.: "eth0").
-        mac_orig (str): Endereço MAC de origem.
-        ip_orig (str): Endereço IP de origem.
+        endereco_ip_host (str): Endereço IP do host a ser escaneado.
+        timeout (int): Tempo limite para aguardar resposta, em milissegundos.
+        interface (str): Nome da interface de rede utilizada para envio (ex.: "eth0").
+        mac_orig (str): Endereço MAC de origem (associado à interface de rede).
+        ip_orig (str): Endereço IP de origem (associado à interface de rede).
 
     Returns:
-        tuple: Endereco IP e tempo de resposta (se ativo), ou None.
+        tuple:
+            - str: Endereço IP do host escaneado (ex.: "192.168.1.1").
+            - float: Tempo de resposta (RTT) em milissegundos, se o host responder.
+        None:
+            Retorna None se não houver resposta do host dentro do tempo limite.
+
+    Raises:
+        TimeoutError: Se o tempo limite para resposta for atingido.
+        ValueError: Se ocorrer um erro ao resolver o MAC de destino.
+        Exception: Para quaisquer outros erros encontrados durante o escaneamento.
     """
     try:
-        # Define MAC de destino (Broadcast por não ser conhecido)
-        mac_dest = "ff:ff:ff:ff:ff:ff"
+        # Tentar resolver o MAC do destino
+        try:
+            mac_dest = arp_request(
+                ip_dest=endereco_ip_host, 
+                interface=interface, 
+                ip_orig=ip_orig, 
+                mac_orig=mac_orig
+            )
+        except ValueError:
+            mac_dest = "ff:ff:ff:ff:ff:ff"  # Fallback para broadcast
 
         # Monta pacote completo
         pacote = monta_pacote(mac_orig=mac_orig, mac_dest=mac_dest, ip_orig=ip_orig, ip_dest=endereco_ip_host)
