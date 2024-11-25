@@ -28,12 +28,6 @@ def start_time() -> None:
     
     Essa funcao registra o tempo atual em uma variavel global (totl_init_time),
     permitindo calcular a duracao total da execucao posteriormente.
-
-    Args:
-        None
-    
-    Returns:
-        None
     """
     global totl_init_time
     totl_init_time = time.time()
@@ -107,7 +101,7 @@ def save_arp_cache(cache: dict) -> None:
 
 def imprime_enderecos(active_hosts: list, total_hosts: int) -> None:
     """
-    Exibe os endereços IPv4 e tempos de resposta dos hosts ativos.
+    Exibe os enderecos IPv4 e tempos de resposta dos hosts ativos.
 
     Args:
         active_hosts (list): Lista de tuplas contendo o IP do host (str) e o tempo de resposta (float).
@@ -120,18 +114,18 @@ def imprime_enderecos(active_hosts: list, total_hosts: int) -> None:
     for host in active_hosts:
         print(f"IPv4: {host[0]}, Response time: {host[1]:.2f} ms")
 
-    print(f"\nNúmero total de máquinas na rede: {total_hosts}")
-    print(f"Número de máquinas ativas: {len(active_hosts)}")
+    print(f"\nNúmero total de maquinas na rede: {total_hosts}")
+    print(f"Número de maquinas ativas: {len(active_hosts)}")
 
 def is_valid_mac(mac: str) -> bool:
     """
-    Valida se o endereço MAC é plausível e não é broadcast ou de roteadores.
+    Valida se o endereco MAC e plausível e nao e broadcast ou de roteadores.
 
     Args:
-        mac (str): Endereço MAC no formato "AA:BB:CC:DD:EE:FF".
+        mac (str): Endereco MAC no formato "AA:BB:CC:DD:EE:FF".
 
     Returns:
-        bool: True se o MAC for válido, False caso contrário.
+        bool: True se o MAC for valido, False caso contrario.
     """
     invalid_macs = {"ff:ff:ff:ff:ff:ff", "00:00:00:00:00:00"}
     return mac not in invalid_macs
@@ -152,13 +146,13 @@ def lista_enderecos(ip_range:str) -> list:
 
 def obtem_interface():
     """
-    Retorna a interface de rede conectada ao gateway padrão.
+    Retorna a interface de rede conectada ao gateway padrao.
     """
     try:
         with os.popen("ip route | grep default") as route_info:
             default_route = route_info.read().strip()
         if not default_route:
-            raise RuntimeError("Nenhuma rota padrão encontrada.")
+            raise RuntimeError("Nenhuma rota padrao encontrada.")
         
         # Extraindo o nome da interface
         parts = default_route.split()
@@ -166,7 +160,7 @@ def obtem_interface():
 
         # Validando se a interface existe
         if not interface or not os.path.exists(f"/sys/class/net/{interface}"):
-            raise RuntimeError(f"Interface detectada ({interface}) não é válida.")
+            raise RuntimeError(f"Interface detectada ({interface}) nao e valida.")
         
         return interface
     except Exception as e:
@@ -175,16 +169,16 @@ def obtem_interface():
 
 def obtem_endr_orig(ip_dest: str) -> tuple:
     """
-    Obtém o endereço IP e MAC da própria máquina.
+    Obtem o endereco IP e MAC da própria maquina.
 
     Args:
-        ip_dest (str): Endereço IP de destino (não usado para determinar o MAC local, mas necessário para lógica do socket).
+        ip_dest (str): Endereco IP de destino (nao usado para determinar o MAC local, mas necessario para lógica do socket).
 
     Returns:
         tuple: IP de origem (str), MAC de origem (str).
 
     Raises:
-        ValueError: Se não for possível determinar os endereços.
+        ValueError: Se nao for possível determinar os enderecos.
     """
     try:
         # Obter IP de origem
@@ -203,9 +197,9 @@ def calcula_checksum(data: bytes) -> int:
     """
     Calcula o checksum de um pacote ICMP.
 
-    O checksum é calculado somando todas as palavras de 16 bits (2 bytes consecutivos)
-    do pacote. Se o número total de bytes for ímpar, o último byte é tratado como
-    se estivesse acompanhado de um byte 0. Após a soma, o resultado é ajustado para
+    O checksum e calculado somando todas as palavras de 16 bits (2 bytes consecutivos)
+    do pacote. Se o número total de bytes for ímpar, o último byte e tratado como
+    se estivesse acompanhado de um byte 0. Após a soma, o resultado e ajustado para
     caber em 16 bits e complementado bit a bit.
 
     Args:
@@ -234,19 +228,19 @@ def calcula_checksum(data: bytes) -> int:
 
 def cria_cabecalho_ethernet(mac_dest: str, mac_orig: str, protocol: int) -> bytes:
     """
-    Cria um cabeçalho Ethernet com os endereços MAC e o protocolo especificado.
+    Cria um cabecalho Ethernet com os enderecos MAC e o protocolo especificado.
 
     Args:
-        mac_dest (str): Endereço MAC de destino no formato "AA:BB:CC:DD:EE:FF".
-        mac_orig (str): Endereço MAC de origem no formato "AA:BB:CC:DD:EE:FF".
+        mac_dest (str): Endereco MAC de destino no formato "AA:BB:CC:DD:EE:FF".
+        mac_orig (str): Endereco MAC de origem no formato "AA:BB:CC:DD:EE:FF".
         protocol (int): Tipo Ethernet (ex.: 0x0800 para IPv4).
 
     Returns:
-        bytes: Cabeçalho Ethernet formatado.
+        bytes: Cabecalho Ethernet formatado.
     """
     try:
         if not mac_dest or not mac_orig:
-            raise ValueError("MAC de origem ou destino inválido.")
+            raise ValueError("MAC de origem ou destino invalido.")
 
         mac_dest_bytes = bytes.fromhex(mac_dest.replace(':', ''))
         mac_orig_bytes = bytes.fromhex(mac_orig.replace(':', ''))
@@ -260,30 +254,30 @@ def cria_cabecalho_ethernet(mac_dest: str, mac_orig: str, protocol: int) -> byte
         # print(f"[DEBUG] Ethernet Header: {ethernet_header.hex()}")
         return ethernet_header
     except Exception as e:
-        # print(f"[ERRO] ERRO NO CRIA CABEÇALHO ETHERNET: {e}")
+        # print(f"[ERRO] ERRO NO CRIA CABEcALHO ETHERNET: {e}")
         return None
 
 def cria_cabecalho_ip(ip_orig: str, ip_dest: str, payload_length: int) -> bytes:
     """
-    Cria o cabeçalho IP.
+    Cria o cabecalho IP.
 
     Args:
-        ip_orig (str): Endereço IP de origem.
-        ip_dest (str): Endereço IP de destino.
+        ip_orig (str): Endereco IP de origem.
+        ip_dest (str): Endereco IP de destino.
         payload_length (int): Tamanho do payload.
 
     Returns:
-        bytes: Cabeçalho IP formatado.
+        bytes: Cabecalho IP formatado.
     """ 
     try:
-        version_ihl = (4 << 4) | 5  # Versão IPv4 e IHL = 5 palavras (20 bytes)
-        dscp_ecn = 0  # Tipo de serviço
+        version_ihl = (4 << 4) | 5  # Versao IPv4 e IHL = 5 palavras (20 bytes)
+        dscp_ecn = 0  # Tipo de servico
         total_length = 20 + payload_length  # Tamanho total do pacote IP
-        identification = 54321  # Identificação do pacote
-        flags_fragment_offset = 0  # Sem fragmentação
+        identification = 54321  # Identificacao do pacote
+        flags_fragment_offset = 0  # Sem fragmentacao
         ttl = 64  # Time to live
         protocol = 1  # ICMP
-        checksum = 0  # Inicialmente 0 para o cálculo
+        checksum = 0  # Inicialmente 0 para o calculo
         src_ip = socket.inet_aton(ip_orig)
         dest_ip = socket.inet_aton(ip_dest)
 
@@ -319,12 +313,12 @@ def cria_cabecalho_ip(ip_orig: str, ip_dest: str, payload_length: int) -> bytes:
         # print(f"[DEBUG] IP Header: {header.hex()}")
         return header
     except Exception as e:
-        # print(f"[ERRO] Falha ao criar cabeçalho IP: {e}")
+        # print(f"[ERRO] Falha ao criar cabecalho IP: {e}")
         return None
 
 def cria_pacote_icmp(identificador: int, sequencia: int) -> bytes:
     """
-    Cria o cabeçalho ICMP Echo Request.
+    Cria o cabecalho ICMP Echo Request.
 
     Args:
         identificador (int): Identificador único do pacote ICMP.
@@ -335,17 +329,17 @@ def cria_pacote_icmp(identificador: int, sequencia: int) -> bytes:
     """
     try:
         tipo = 8  # Echo request
-        codigo = 0  # Código padrão
+        codigo = 0  # Código padrao
         checksum = 0  # Inicialmente 0
 
-        # Cabeçalho inicial com checksum zero
+        # Cabecalho inicial com checksum zero
         header = struct.pack('!BBHHH', tipo, codigo, checksum, identificador, sequencia)
         payload = b"Looking for active hosts..."  # Mensagem de teste no payload
 
-        # Calcula o checksum do cabeçalho e do payload
+        # Calcula o checksum do cabecalho e do payload
         checksum = calcula_checksum(header + payload)
 
-        # Recria o cabeçalho com o checksum correto
+        # Recria o cabecalho com o checksum correto
         header = struct.pack('!BBHHH', tipo, codigo, checksum, identificador, sequencia)
 
         pacote = header + payload
@@ -354,37 +348,37 @@ def cria_pacote_icmp(identificador: int, sequencia: int) -> bytes:
         # print(f"[DEBUG] ICMP Packet: {pacote.hex()}")
         return pacote
     except Exception as e:
-        # print(f"[ERRO] Falha ao criar cabeçalho ICMP: {e}")
+        # print(f"[ERRO] Falha ao criar cabecalho ICMP: {e}")
         return None
 
 def cria_cabecalho_arp(mac_orig: str, ip_orig: str, mac_dest: str = "00:00:00:00:00:00", ip_dest: str = "0.0.0.0", operacao: int = 1) -> bytes:
     """
-    Cria o cabeçalho ARP.
+    Cria o cabecalho ARP.
 
     Args:
-        mac_origem (str): Endereço MAC de origem.
-        ip_origem (str): Endereço IP de origem.
-        mac_destino (str): Endereço MAC de destino. Padrão: "00:00:00:00:00:00".
-        ip_dest (str): Endereço IP de destino. Padrão: "0.0.0.0".
-        operacao (int): Tipo de operação ARP (1 = Request, 2 = Reply). Padrão: 1 (Request).
+        mac_origem (str): Endereco MAC de origem.
+        ip_origem (str): Endereco IP de origem.
+        mac_destino (str): Endereco MAC de destino. Padrao: "00:00:00:00:00:00".
+        ip_dest (str): Endereco IP de destino. Padrao: "0.0.0.0".
+        operacao (int): Tipo de operacao ARP (1 = Request, 2 = Reply). Padrao: 1 (Request).
 
     Returns:
-        bytes: Cabeçalho ARP em bytes.
+        bytes: Cabecalho ARP em bytes.
     """
     try:
         htype = struct.pack("!H", 1)            # Tipo de hardware: Ethernet (1)
         ptype = struct.pack("!H", 0x0800)       # Tipo de protocolo: IPv4 (0x0800)
-        hlen = struct.pack("!B", 6)             # Comprimento do endereço de hardware: 6 bytes
-        plen = struct.pack("!B", 4)             # Comprimento do endereço de protocolo: 4 bytes
-        operacao = struct.pack("!H", operacao)  # Operação ARP (1 = Request, 2 = Reply)
+        hlen = struct.pack("!B", 6)             # Comprimento do endereco de hardware: 6 bytes
+        plen = struct.pack("!B", 4)             # Comprimento do endereco de protocolo: 4 bytes
+        operacao = struct.pack("!H", operacao)  # Operacao ARP (1 = Request, 2 = Reply)
 
-        # Converte endereços MAC e IP para bytes
+        # Converte enderecos MAC e IP para bytes
         mac_origem_bytes = bytes.fromhex(mac_orig.replace(":", ""))
         ip_origem_bytes = socket.inet_aton(ip_orig)
         mac_destino_bytes = bytes.fromhex(mac_dest.replace(":", ""))
         ip_destino_bytes = socket.inet_aton(ip_dest)
 
-        # Monta o cabeçalho ARP
+        # Monta o cabecalho ARP
         cabecalho = (
             htype +
             ptype +
@@ -399,7 +393,7 @@ def cria_cabecalho_arp(mac_orig: str, ip_orig: str, mac_dest: str = "00:00:00:00
 
         return cabecalho
     except Exception as e:
-        print(f"[ERRO] ERRO NO CABEÇALHO ARP: {e}")
+        print(f"[ERRO] ERRO NO CABEcALHO ARP: {e}")
         raise
 
 def monta_pacote(mac_orig: str, mac_dest: str, ip_orig: str, ip_dest: str) -> bytes:
@@ -407,34 +401,34 @@ def monta_pacote(mac_orig: str, mac_dest: str, ip_orig: str, ip_dest: str) -> by
     Monta o pacote completo (Ethernet + IP + ICMP).
 
     Args:
-        mac_orig (str): Endereço MAC de origem.
-        mac_dest (str): Endereço MAC de destino.
-        ip_orig (str): Endereço IP de origem.
-        ip_dest (str): Endereço IP de destino.
+        mac_orig (str): Endereco MAC de origem.
+        mac_dest (str): Endereco MAC de destino.
+        ip_orig (str): Endereco IP de origem.
+        ip_dest (str): Endereco IP de destino.
 
     Returns:
         bytes: Pacote completo para envio, ou None em caso de erro.
     """
     try:
         if not is_valid_mac(mac_orig) or not is_valid_mac(mac_dest):
-            raise ValueError("Endereços MAC inválidos.")
+            raise ValueError("Enderecos MAC invalidos.")
         if not ip_orig or not ip_dest:
-            raise ValueError("Endereços IP inválidos.")
+            raise ValueError("Enderecos IP invalidos.")
 
         ethernet_header = cria_cabecalho_ethernet(mac_dest, mac_orig, 0x0800)
         if not ethernet_header:
-            raise ValueError("Falha ao criar cabeçalho Ethernet.")
-        # print(f"[DEBUG] Cabeçalho Ethernet: {ethernet_header.hex()}")
+            raise ValueError("Falha ao criar cabecalho Ethernet.")
+        # print(f"[DEBUG] Cabecalho Ethernet: {ethernet_header.hex()}")
 
         icmp_header = cria_pacote_icmp(1, 1)
         if not icmp_header:
-            raise ValueError("Falha ao criar cabeçalho ICMP.")
-        # print(f"[DEBUG] Cabeçalho ICMP: {icmp_header.hex()}")
+            raise ValueError("Falha ao criar cabecalho ICMP.")
+        # print(f"[DEBUG] Cabecalho ICMP: {icmp_header.hex()}")
 
         ip_header = cria_cabecalho_ip(ip_orig, ip_dest, len(icmp_header))
         if not ip_header:
-            raise ValueError("Falha ao criar cabeçalho IP.")
-        # print(f"[DEBUG] Cabeçalho IP: {ip_header.hex()}")
+            raise ValueError("Falha ao criar cabecalho IP.")
+        # print(f"[DEBUG] Cabecalho IP: {ip_header.hex()}")
 
         pacote = ethernet_header + ip_header + icmp_header
         # print(f"[DEBUG] Pacote completo (Ethernet+IP+ICMP): {pacote.hex()}")
@@ -470,29 +464,29 @@ def enviar_pacote(pacote: bytes, interface: str, timeout: float) -> tuple:
                 # print(f"[DEBUG] Resposta recebida em {rtt:.2f} ms")
                 return resposta, rtt
             except socket.timeout:
-                # print("[DEBUG] Timeout alcançado sem resposta.")
+                # print("[DEBUG] Timeout alcancado sem resposta.")
                 return None, None
     except Exception as e:
-        # print(f"[ERRO] Falha no envio ou recepção: {e}")
+        # print(f"[ERRO] Falha no envio ou recepcao: {e}")
         return None, None
 
 def arp_request(ip_dest: str, interface: str, ip_orig: str, mac_orig: str, timeout: float = 1.0) -> str:
     """
-    Resolve o endereço MAC para o IP de destino utilizando ARP.
+    Resolve o endereco MAC para o IP de destino utilizando ARP.
 
     Args:
-        ip_dest (str): Endereço IP do destino.
+        ip_dest (str): Endereco IP do destino.
         interface (str): Interface de rede.
-        ip_orig (str): Endereço IP de origem.
-        mac_orig (str): Endereço MAC de origem.
+        ip_orig (str): Endereco IP de origem.
+        mac_orig (str): Endereco MAC de origem.
         timeout (float): Tempo limite para aguardar resposta em segundos.
 
     Returns:
-        str: Endereço MAC do IP de destino, ou None se a resolução falhar.
+        str: Endereco MAC do IP de destino, ou None se a resolucao falhar.
     """
     global arp_cache
 
-    # Verificar se o MAC está no cache
+    # Verificar se o MAC esta no cache
     if ip_dest in arp_cache:
         mac_dest = arp_cache[ip_dest]
         # print(f"[DEBUG] MAC encontrado no cache ARP para {ip_dest}: {mac_dest}")
@@ -502,10 +496,10 @@ def arp_request(ip_dest: str, interface: str, ip_orig: str, mac_orig: str, timeo
         pacote = cria_cabecalho_arp(mac_orig, ip_orig, "00:00:00:00:00:00", ip_dest, 1)
         resposta, _ = enviar_pacote(pacote, interface, timeout)
 
-        if resposta and len(resposta) >= 12:  # Verifique se há dados suficientes
+        if resposta and len(resposta) >= 12:  # Verifique se ha dados suficientes
             mac_dest = ':'.join(f"{b:02x}" for b in resposta[6:12])
             if not is_valid_mac(mac_dest):
-                # print(f"[ALERTA] MAC inválido detectado para {ip_dest}: {mac_dest}")
+                # print(f"[ALERTA] MAC invalido detectado para {ip_dest}: {mac_dest}")
                 return None
             # print(f"[DEBUG] MAC resolvido para {ip_dest}: {mac_dest}")
 
@@ -514,7 +508,7 @@ def arp_request(ip_dest: str, interface: str, ip_orig: str, mac_orig: str, timeo
             save_arp_cache(arp_cache)
             return mac_dest
         else:
-            # print(f"[DEBUG] Nenhuma resposta ARP válida recebida para {ip_dest}")
+            # print(f"[DEBUG] Nenhuma resposta ARP valida recebida para {ip_dest}")
             return None
     except Exception as e:
         # print(f"[ERRO] Falha no ARP Request para {ip_dest}: {e}")
@@ -525,11 +519,11 @@ def scan_host(endereco_ip_host: str, timeout: int, interface: str, mac_orig: str
     Escaneia um único host na rede.
 
     Args:
-        endereco_ip_host (str): Endereço IP do host a ser escaneado.
+        endereco_ip_host (str): Endereco IP do host a ser escaneado.
         timeout (int): Tempo limite para o scan em milissegundos.
         interface (str): Interface de rede utilizada.
-        mac_orig (str): Endereço MAC de origem.
-        ip_orig (str): Endereço IP de origem.
+        mac_orig (str): Endereco MAC de origem.
+        ip_orig (str): Endereco IP de origem.
 
     Returns:
         tuple: (IP do host ativo, tempo de resposta em milissegundos) ou None.
@@ -540,12 +534,12 @@ def scan_host(endereco_ip_host: str, timeout: int, interface: str, mac_orig: str
             mac_dest = arp_request(endereco_ip_host, interface, ip_orig, mac_orig, timeout / 1000)
 
         if not mac_dest:
-            # print(f"[DEBUG] Não foi possível resolver o MAC para {endereco_ip_host}.")
+            # print(f"[DEBUG] Nao foi possível resolver o MAC para {endereco_ip_host}.")
             return None
 
         pacote = monta_pacote(mac_orig, mac_dest, ip_orig, endereco_ip_host)
         if not pacote:
-            # print(f"[DEBUG] Pacote inválido para {endereco_ip_host}.")
+            # print(f"[DEBUG] Pacote invalido para {endereco_ip_host}.")
             return None
 
         resposta, rtt = enviar_pacote(pacote, interface, timeout / 1000)
@@ -565,12 +559,12 @@ def thread_scan(host: str, timeout: int, active_hosts: list, lock: threading.Loc
     Executa o escaneamento de um host dentro de uma thread.
 
     Args:
-        host (str): Endereço IP do host a ser escaneado.
+        host (str): Endereco IP do host a ser escaneado.
         timeout (int): Tempo limite em milissegundos.
         active_hosts (list): Lista compartilhada de hosts ativos.
-        lock (threading.Lock): Lock para acesso sincronizado à lista.
-        mac_orig (str): Endereço MAC de origem.
-        ip_orig (str): Endereço IP de origem.
+        lock (threading.Lock): Lock para acesso sincronizado a lista.
+        mac_orig (str): Endereco MAC de origem.
+        ip_orig (str): Endereco IP de origem.
         interface (str): Interface de rede usada.
 
     Returns:
@@ -592,21 +586,21 @@ def thread_scan(host: str, timeout: int, active_hosts: list, lock: threading.Loc
 
 def scan_all_hosts(ip_range: str, timeout: int, mac_orig: str, ip_orig: str, interface: str) -> list:
     """
-    Realiza a varredura de todos os endereços IP em um intervalo fornecido.
+    Realiza a varredura de todos os enderecos IP em um intervalo fornecido.
 
-    A função utiliza multithreading para otimizar a varredura. Cada endereço IP é escaneado
+    A funcao utiliza multithreading para otimizar a varredura. Cada endereco IP e escaneado
     com ARP e ICMP para verificar a disponibilidade do host.
 
     Args:
         ip_range (str): Intervalo de IPs no formato CIDR (ex.: "192.168.1.0/24").
         timeout (int): Tempo limite para cada tentativa de varredura em milissegundos.
-        mac_orig (str): Endereço MAC da máquina de origem.
-        ip_orig (str): Endereço IP da máquina de origem.
+        mac_orig (str): Endereco MAC da maquina de origem.
+        ip_orig (str): Endereco IP da maquina de origem.
         interface (str): Interface de rede utilizada.
 
     Returns:
         list: Lista de tuplas contendo:
-            - Endereço IP ativo (str).
+            - Endereco IP ativo (str).
             - Tempo de resposta em milissegundos (float).
     """
     active_hosts = []
@@ -624,7 +618,7 @@ def scan_all_hosts(ip_range: str, timeout: int, mac_orig: str, ip_orig: str, int
             try:
                 future.result()
             except Exception as e:
-                # print(f"[ERRO] Falha na execução de thread: {e}")
+                # print(f"[ERRO] Falha na execucao de thread: {e}")
                 pass
 
     # print(f"[DEBUG] Varredura concluída. {len(active_hosts)} hosts ativos encontrados.")
@@ -632,18 +626,18 @@ def scan_all_hosts(ip_range: str, timeout: int, mac_orig: str, ip_orig: str, int
 
 def main():
     """
-    Função principal que coordena a execução do programa de varredura de rede.
+    Funcao principal que coordena a execucao do programa de varredura de rede.
 
-    Esta função:
+    Esta funcao:
         1. Carrega o cache ARP salvo anteriormente, se disponível.
-        2. Determina a interface de rede conectada ao gateway padrão.
-        3. Obtém os endereços IP e MAC da máquina de origem.
+        2. Determina a interface de rede conectada ao gateway padrao.
+        3. Obtem os enderecos IP e MAC da maquina de origem.
         4. Realiza a varredura de todos os hosts no intervalo fornecido.
         5. Exibe os resultados da varredura, incluindo:
            - Hosts ativos com tempos de resposta.
-           - Número total de máquinas na rede e número de máquinas ativas.
-           - Tempo total de execução da varredura.
-        6. Atualiza e salva o cache ARP ao término.
+           - Número total de maquinas na rede e número de maquinas ativas.
+           - Tempo total de execucao da varredura.
+        6. Atualiza e salva o cache ARP ao termino.
 
     Args:
         None
@@ -687,7 +681,7 @@ def main():
 
     print(f"Tempo total de varredura: {formatar_tempo(total_runtime)}s\n")
 
-    # Salvar o cache ARP ao término da execução
+    # Salvar o cache ARP ao termino da execucao
     save_arp_cache(arp_cache)
 
 main()
