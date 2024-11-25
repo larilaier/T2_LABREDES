@@ -1,3 +1,4 @@
 .vscode
 src/saida.txt
 src/arp_cache.json
+src/history.html
